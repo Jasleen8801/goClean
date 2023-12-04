@@ -15,6 +15,8 @@ type Student struct {
 	RollNo   string `gorm:"type:varchar(100);not null" json:"roll_no"`
 	Hostel   string `gorm:"type:varchar(100);not null" json:"hostel"`
 	RoomNo   string `gorm:"type:varchar(100);not null" json:"room_no"`
+	Floor    string `gorm:"type:varchar(100);not null" json:"floor"`
+	Cleaned  bool   `gorm:"type:boolean;not null" json:"cleaned" default:"false"`
 }
 
 func (s *Student) SaveUser() (*Student, error) {
@@ -66,7 +68,17 @@ func LoginCheck(name string, pwd string) (string, error) {
 	return token, nil
 }
 
-func GetStudents(RoomId uint) (*[]Student, error) {
+func GetStudentById(id uint) (*Student, error) {
+	// Gets the student by id
+	var s *Student
+	err := DB.Model(&Student{}).Where("id = ?", id).Take(&s).Error
+	if err != nil {
+		return &Student{}, err
+	}
+	return s, nil
+}
+
+func GetStudentsbyRoomID(RoomId string) (*[]Student, error) {
 	// Gets all the students in a particular room
 	var s []Student
 	err := DB.Model(&Student{}).Where("room_no = ?", RoomId).Find(&s).Error
@@ -74,4 +86,13 @@ func GetStudents(RoomId uint) (*[]Student, error) {
 		return &[]Student{}, err
 	}
 	return &s, nil
+}
+
+func UpdateRoomCleaned(RoomId string) error {
+	// Updates the cleaned status of a room
+	err := DB.Model(&Student{}).Where("room_no = ?", RoomId).Update("cleaned", gorm.Expr("NOT cleaned")).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

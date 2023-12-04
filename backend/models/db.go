@@ -23,11 +23,14 @@ func ConnectDatabase() {
 
 	var err error
 	dbURI := fmt.Sprintf(
-		"user=%s dbname=%s sslmode=disable password=%s",
+		"host=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
-		os.Getenv("DB_NAME"),
 		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
 	)
+
+	fmt.Println(dbURI)
 
 	DB, err = gorm.Open(postgres.Open(dbURI), &gorm.Config{})
 	if err != nil {
@@ -36,5 +39,8 @@ func ConnectDatabase() {
 	}
 
 	DB.AutoMigrate(&Student{})
+	DB.AutoMigrate(&Hostel{})
+	DB.AutoMigrate(&Admin{})
+	DB.AutoMigrate(&Log{})
 	fmt.Println("Database connected")
 }

@@ -24,3 +24,8 @@ func main() {
 ## What is Gin?
 
 Gin is a web framework written in Go (Golang). It features a martini-like API with much better performance, up to 40 times faster thanks to httprouter. If you need performance and good productivity, you will love Gin.
+
+## Done Till Now
+
+1. Student login, register and all working
+2. Hostel, admin models created
