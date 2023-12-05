@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"goClean/backend/models"
 	"goClean/backend/utils"
 	"html"
@@ -28,19 +29,26 @@ func LoginHostel(h *gin.Context) {
 	h.JSON(http.StatusOK, gin.H{"token": token, "message": "Hostel logged in successfully"})
 }
 
-func ClearAllLogs(h *gin.Context) {
+func authenticateHostel(h *gin.Context) (*models.Hostel, error) {
 	hostId, role, err := utils.ExtractTokenMetadata(h)
 	if err != nil {
-		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return &models.Hostel{}, err
 	}
 
 	if role != utils.Hostel {
-		h.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
+		return &models.Hostel{}, fmt.Errorf("Unauthorized")
 	}
 
 	host, err := models.GetHostelById(hostId)
+	if err != nil {
+		return &models.Hostel{}, err
+	}
+
+	return host, nil
+}
+
+func ClearAllLogs(h *gin.Context) {
+	host, err := authenticateHostel(h)
 	if err != nil {
 		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -53,4 +61,52 @@ func ClearAllLogs(h *gin.Context) {
 	}
 
 	h.JSON(http.StatusOK, gin.H{"message": "All logs cleared successfully"})
+}
+
+func GetAllUncleanedRooms(h *gin.Context) {
+	host, err := authenticateHostel(h)
+	if err != nil {
+		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	rooms, err := host.GetAllUncleanedRoomNos()
+	if err != nil {
+		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	h.JSON(http.StatusOK, gin.H{"rooms": rooms})
+}
+
+func GetAllCleanedRooms(h *gin.Context) {
+	host, err := authenticateHostel(h)
+	if err != nil {
+		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	rooms, err := host.GetAllCleanedRoomNos()
+	if err != nil {
+		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	h.JSON(http.StatusOK, gin.H{"rooms": rooms})
+}
+
+func GetAllHostelLogs(h *gin.Context) {
+	host, err := authenticateHostel(h)
+	if err != nil {
+		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	logs, err := host.GetAllLogs()
+	if err != nil {
+		h.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	h.JSON(http.StatusOK, gin.H{"logs": logs})
 }

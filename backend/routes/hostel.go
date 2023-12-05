@@ -15,6 +15,9 @@ func HostelRoutes(r *gin.Engine) {
 
 	hostel.Use(middlewares.AuthMiddleware())
 	{
-		hostel.PUT("/clear", handlers.ClearAllLogs) // private
+		hostel.PUT("/clear", handlers.ClearAllLogs)             // private
+		hostel.GET("/uncleaned", handlers.GetAllUncleanedRooms) // private
+		hostel.GET("/cleaned", handlers.GetAllCleanedRooms)     // private
+		hostel.GET("/getLogs", handlers.GetAllLogs)             // private
 	}
 }

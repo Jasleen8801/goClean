@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"goClean/backend/utils"
 	"html"
 
@@ -16,20 +17,31 @@ type Student struct {
 	Hostel   string `gorm:"type:varchar(100);not null" json:"hostel"`
 	RoomNo   string `gorm:"type:varchar(100);not null" json:"room_no"`
 	Floor    string `gorm:"type:varchar(100);not null" json:"floor"`
-	Cleaned  bool   `gorm:"type:boolean;not null" json:"cleaned" default:"false"`
 }
 
 func (s *Student) SaveUser() (*Student, error) {
 	// Saves the student to the database
-	err := DB.Create(&s).Error
+	var existingStudent Student
+	err := DB.Model(&Student{}).Where("roll_no = ?", s.RollNo).Take(&existingStudent).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	if err == nil {
+		return &existingStudent, nil
+	}
+
+	err = DB.Create(&s).Error
 	if err != nil {
 		return &Student{}, err
 	}
 	return s, nil
 }
 
+// func (s *Student) BeforeSave(tx *gorm.DB) error {
 func (s *Student) BeforeSave() error {
 	// Hashes the password before saving
+	fmt.Println(s.Password)
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(s.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -39,9 +51,9 @@ func (s *Student) BeforeSave() error {
 	return nil
 }
 
-func (s *Student) VerifyPwd(pwd, hashedPwd string) error {
+func (s *Student) VerifyPwd(pwd string, hashedPwd []byte) error {
 	// Compares the password with the hashed password
-	return bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(pwd))
+	return bcrypt.CompareHashAndPassword(hashedPwd, []byte(pwd))
 }
 
 func LoginCheck(name string, pwd string) (string, error) {
@@ -55,7 +67,8 @@ func LoginCheck(name string, pwd string) (string, error) {
 		return "", err
 	}
 
-	err = s.VerifyPwd(pwd, s.Password)
+	// fmt.Println(s.Password)
+	err = s.VerifyPwd(pwd, []byte(s.Password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return "", err
 	}
@@ -90,9 +103,25 @@ func GetStudentsbyRoomID(RoomId string) (*[]Student, error) {
 
 func UpdateRoomCleaned(RoomId string) error {
 	// Updates the cleaned status of a room
-	err := DB.Model(&Student{}).Where("room_no = ?", RoomId).Update("cleaned", gorm.Expr("NOT cleaned")).Error
+	// err := DB.Model(&Student{}).Where("room_no = ?", RoomId).Update("cleaned", gorm.Expr("NOT cleaned")).Error
+	// if err != nil {
+	// 	return err
+	// }
+
+	err := DB.Model(&Room{}).Where("room_no = ?", RoomId).Update("cleaned", gorm.Expr("NOT cleaned")).Error
 	if err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func (s *Student) GetAllLogs() (*[]Log, error) {
+	// Gets all the logs of the student
+	var l []Log
+	err := DB.Model(&Log{}).Where("student_name = ?", s.Name).Find(&l).Error
+	if err != nil {
+		return &[]Log{}, err
+	}
+	return &l, nil
 }

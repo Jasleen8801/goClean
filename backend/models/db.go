@@ -42,5 +42,6 @@ func ConnectDatabase() {
 	DB.AutoMigrate(&Hostel{})
 	DB.AutoMigrate(&Admin{})
 	DB.AutoMigrate(&Log{})
+	DB.AutoMigrate(&Room{})
 	fmt.Println("Database connected")
 }

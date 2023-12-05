@@ -40,6 +40,7 @@ func HostelLoginCheck(name string, pwd string) (string, error) {
 	return utils.GenerateToken(h.ID, utils.Hostel)
 }
 
+// func (h *Hostel) BeforeSave(tx *gorm.DB) error {
 func (h *Hostel) BeforeSave() error {
 	// Hashes the password before saving
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(h.Password), bcrypt.DefaultCost)
@@ -63,10 +64,41 @@ func GetHostelById(id uint) (*Hostel, error) {
 
 func (h *Hostel) ClearAllLogs() error {
 	// Clears all the logs of the hostel
-	fmt.Println(h.Hostel)
 	err := DB.Where("hostel = ?", h.Hostel).Delete(&Log{}).Error
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (h *Hostel) GetAllUncleanedRoomNos() ([]string, error) {
+	// Gets all the uncleaned room numbers of the hostel
+	var rooms []string
+	err := DB.Model(&Room{}).Where("hostel = ? AND cleaned = ?", h.Hostel, false).Pluck("room_no", &rooms).Error
+	if err != nil {
+		return []string{}, err
+	}
+	// fmt.Println(rooms)
+	return rooms, nil
+}
+
+func (h *Hostel) GetAllCleanedRoomNos() (*[]Room, error) {
+	// Gets all the cleaned room numbers of the hostel
+	var r []Room
+	err := DB.Model(&Room{}).Where("hostel = ? AND cleaned = ?", h.Hostel, true).Find(&r).Error
+	if err != nil {
+		return &[]Room{}, err
+	}
+	fmt.Println(r)
+	return &r, nil
+}
+
+func (h *Hostel) GetAllLogs() (*[]Log, error) {
+	// Gets all the logs of the hostel
+	var logs []Log
+	err := DB.Model(&Log{}).Where("hostel = ?", h.Hostel).Find(&logs).Error
+	if err != nil {
+		return &[]Log{}, err
+	}
+	return &logs, nil
 }

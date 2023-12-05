@@ -21,6 +21,7 @@ func RegisterAdmin(a *gin.Context) {
 		Password: adm.Password,
 	}
 
+	// user.BeforeSave(models.DB)
 	user.BeforeSave()
 	_, err := user.SaveAdmin()
 	if err != nil {
@@ -74,6 +75,7 @@ func AddHostel(a *gin.Context) {
 		return
 	}
 
+	// hostel.BeforeSave(models.DB)
 	hostel.BeforeSave()
 	hostel, err = admin.AddHostel(hostel)
 	if err != nil {

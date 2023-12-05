@@ -11,6 +11,7 @@ import (
 
 func RegisterStudent(s *gin.Context) {
 	var stud *models.Student
+	var room *models.Room
 	if err := s.ShouldBindJSON(&stud); err != nil {
 		s.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -25,12 +26,26 @@ func RegisterStudent(s *gin.Context) {
 		Floor:    stud.Floor,
 	}
 
-	user.BeforeSave()
-	_, err := user.SaveUser()
+	// err := user.BeforeSave(models.DB)
+	err := user.BeforeSave()
 	if err != nil {
 		s.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	_, err = user.SaveUser()
+	if err != nil {
+		s.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	room = &models.Room{
+		Hostel:  stud.Hostel,
+		RoomNo:  stud.RoomNo,
+		Floor:   stud.Floor,
+		Cleaned: false,
+	}
+	room.SaveRoom()
 
 	s.JSON(http.StatusOK, gin.H{"data": user, "message": "Student registered successfully"})
 }
@@ -100,4 +115,26 @@ func UpdateRoomStatus(s *gin.Context) {
 	}
 
 	s.JSON(http.StatusOK, gin.H{"message": "Room status updated successfully"})
+}
+
+func GetAllLogs(s *gin.Context) {
+	userId, _, err := utils.ExtractTokenMetadata(s)
+	if err != nil {
+		s.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	student, err := models.GetStudentById(userId)
+	if err != nil {
+		s.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	logs, err := student.GetAllLogs()
+	if err != nil {
+		s.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	s.JSON(http.StatusOK, gin.H{"data": logs, "message": "Logs fetched successfully"})
 }

@@ -16,13 +16,24 @@ type Admin struct {
 
 func (a *Admin) SaveAdmin() (*Admin, error) {
 	// Saves the admin to the database
-	err := DB.Create(&a).Error
+	var existingAdmin Admin
+	err := DB.Model(&Admin{}).Where("name = ?", a.Name).Take(&existingAdmin).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	if err == nil {
+		return &existingAdmin, nil
+	}
+
+	err = DB.Create(&a).Error
 	if err != nil {
 		return &Admin{}, err
 	}
 	return a, nil
 }
 
+// func (a *Admin) BeforeSave(tx *gorm.DB) error {
 func (a *Admin) BeforeSave() error {
 	// Hashes the password before saving
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
